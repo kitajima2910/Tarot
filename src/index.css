@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Mulish", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
   --color-gold: #d4af37;
   --color-gold-soft: #e9cf8f;

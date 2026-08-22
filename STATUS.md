@@ -2268,3 +2268,42 @@ input focus ring, submit rounded-full, success box ✦). Giữ nguyên text i18n
 - Visual form card + focus ring + success box cần browser thật — user tự
   `npm run dev` soi.
 - Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — Font thân văn bản Montserrat (phiên này)
+
+### Yêu cầu
+User muốn dùng font Montserrat. Verify Google Fonts css2 (UA Chrome, đọc
+subset/unicode-range): Montserrat có subset **vietnamese** (+latin,
+cyrillic, latin-ext) → hỗ trợ đủ tiếng Việt.
+
+### Đã thay đổi (2 dòng — thay Mulish → Montserrat, giữ Playfair serif)
+1. `index.html`: link Google Fonts `Mulish:wght@400;600;700;800` →
+   `Montserrat:wght@400;600;700;800` (giữ Playfair Display cho serif
+   heading/tên lá — font-serif vẫn là Playfair).
+2. `src/index.css`: `--font-sans: "Mulish"` → `"Montserrat"` (font-sans
+   dùng cho thân văn bản/UI, body font-family theo var(--font-sans)).
+   Font-serif (Playfair) + gold token giữ nguyên.
+
+### File đã sửa
+- index.html
+- src/index.css
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 452ms; JS 293.09KB / gzip 91.52KB; CSS 46.28KB.
+- Dist verify (node đọc build): dist/index.html chứa "Montserrat" + hết
+  "Mulish"; CSS `--font-sans: "Montserrat"` + hết "Mulish".
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Lưu ý: Montserrat là sans (thân văn bản); heading/tên lá vẫn Playfair
+  serif — nếu user muốn Montserrat cho cả tiêu đề thì đổi thêm
+  `--font-serif` hoặc thay class `font-serif` (không làm, nằm ngoài yêu
+  cầu hiện tại).
+- Visual font Montserrat (độ rộng/kerning khác Mulish) cần browser thật —
+  user tự `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.
