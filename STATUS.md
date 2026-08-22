@@ -2230,3 +2230,41 @@ i18n `about.*` (không đổi nội dung). Dùng shared `Ornament`.
 - Visual card intro + step chip + note box cần browser thật — user tự
   `npm run dev` soi.
 - Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — Làm đẹp trang /contact (phiên này)
+
+### Phạm vi
+`src/pages/ContactPage.tsx` — form contact, áp style «mystical» đồng bộ
+(Ornament serif gold header, intro card, form card nền gradient, label gold,
+input focus ring, submit rounded-full, success box ✦). Giữ nguyên text i18n
+`contact.*` + logic `sent` (demo). Dùng shared `Ornament`.
+
+### Đã thay đổi (1 file)
+- Header: `Ornament "Mystic"` + h1 font-serif text-3xl/4xl gold-soft căn
+  giữa (đồng bộ /about).
+- Intro: chuyển thành card `rounded-2xl border bg-gradient-to-b
+  from-white/5 to-transparent p-6` căn giữa.
+- Form: bọc trong card `rounded-2xl border bg-gradient-to-b from-white/5
+  to-transparent p-6 sm:p-8` + `space-y-5`; 3 field dùng chung `inputCls`
+  (thêm placeholder = label, focus ring-2 violet-500/20); label font-medium.
+- Submit: `rounded-xl` → `rounded-full` + ring-1 ring-white/10 (đồng bộ
+  ActionButton của các trang khác).
+- Success box: `rounded-xl p-4` → `rounded-2xl p-8 text-center` + dấu ✦ 2xl
+  phía trên + emerald (giữ role="status").
+
+### File đã sửa
+- src/pages/ContactPage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 547ms; JS 293.09KB / gzip 91.52KB; CSS 46.02KB.
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual form card + focus ring + success box cần browser thật — user tự
+  `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.
