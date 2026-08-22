@@ -60,7 +60,7 @@ export function AllCardsPage() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('cards.searchPlaceholder')}
           aria-label={t('cards.searchAria')}
-          className="ml-2 w-44 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-violet-400 focus:outline-none"
+          className="w-44 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-violet-400 focus:outline-none"
         />
       </div>
 
@@ -82,15 +82,17 @@ function CardRow({ id, onZoom }: { id: number; onZoom: () => void }) {
   const { locale } = useI18n()
   const c = cardById(id)
   return (
-    <li className="group overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent transition hover:-translate-y-1 hover:border-violet-400/40 hover:shadow-lg hover:shadow-violet-950/30">
-      <FlipCard
-        card={{ id: c.id, orientation: 'upright' }}
-        size="sm"
-        revealed
-        showBadge={false}
-        onFlip={onZoom}
-      />
-      <div className="mt-3 border-t border-white/10 px-4 pb-4 pt-3">
+    <li className="group flex flex-col items-center overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent transition hover:-translate-y-1 hover:border-violet-400/40 hover:shadow-lg hover:shadow-violet-950/30">
+      <div className="flex w-full justify-center pt-4">
+        <FlipCard
+          card={{ id: c.id, orientation: 'upright' }}
+          size="sm"
+          revealed
+          showBadge={false}
+          onFlip={onZoom}
+        />
+      </div>
+      <div className="mt-3 w-full border-t border-white/10 px-4 pb-4 pt-3 text-center">
         <span className="block font-serif text-base font-semibold tracking-wide text-gold-soft">
           {String(c.id).padStart(2, '0')}. {cardName(c, locale)}
         </span>

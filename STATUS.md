@@ -2307,3 +2307,39 @@ cyrillic, latin-ext) → hỗ trợ đủ tiếng Việt.
 - Visual font Montserrat (độ rộng/kerning khác Mulish) cần browser thật —
   user tự `npm run dev` soi.
 - Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — Chữa lệch UI/UX trang /card-meanings (phiên này)
+
+### Root cause
+Trong `CardRow` (AllCardsPage.tsx), `<FlipCard>` (fixed width sm=96px,
+`shrink-0`) nằm TRỰC TIẾP trong `<li>` (grid cell rộng ~300+px), chưa được
+căn giữa → lá bài bị kéo lệch sang trái, tạo khoảng trống một bên. Ô thông
+tin bên dưới lại full-width → phần ảnh và phần tên không thẳng hàng, nhìn
+"lệch". Ngoài ra `<input>` search có `ml-2` trong flex-wrap → gây lệch
+dòng khi wraps.
+
+### Đã thay đổi (1 file — AllCardsPage.tsx)
+1. `CardRow`: `<li>` chuyển thành `flex flex-col items-center`; bọc
+   `<FlipCard>` trong `div flex w-full justify-center pt-4` → ảnh nằm GIỮA
+   ô, không còn lệch trái; caption `text-center` + full-width (dùng
+   `mt-3 w-full ...` thay `mt-3`) → ảnh và tên thẳng hàng tâm.
+2. `<input>` search: bỏ `ml-2`; dùng gap của flex container (đang có
+   `gap-2`) → không còn lệch tuyệt đối khi wrap.
+
+### File đã sửa
+- src/pages/AllCardsPage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 564ms; JS 293.20KB / gzip 91.54KB; CSS 46.28KB.
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Đã chữa phần "lệch" (căn giữa trong ô + hàng tên tâm); còn xác nhận
+  trực quan bằng browser (cột lưới đều, wrap filter/search) — user tự
+  `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.
