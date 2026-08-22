@@ -2055,3 +2055,98 @@ User chọn phạm vi **"UI + toàn bộ nghĩa bài"** (đầy đủ: dịch c�
   nhẹ trên mobile — cần browser thật (`npm run dev`).
 - Nợ cũ mục 1-8 giữ nguyên (BUG-001 đã fix, coverage <60%, CardFan mobile,
   route 404, runtime thiếu, visual browser check, dist +46MB giờ thêm dict).
+
+## Phase CODE — Làm đẹp trang /tarot-reading (phiên này)
+
+### Phạm vi
+`src/pages/TopicPage.tsx` — recompose 3 phase (setup chọn chủ đề, table
+rút bài, reveal lật bài) theo style «mystical» đồng bộ HomePage (Ornament,
+serif gold, rounded-full, glow). Giữ nguyên logic flow/phases, CardFan,
+FlipCard, TopicGrid, i18n, toast/saveSession. Thêm 2 helper local
+`Ornament` + `ActionButton` (tái dùng).
+
+### Đã thay đổi (1 file)
+- Header khối: `Ornament "Tarot"` phía trên + h1 font-serif text-3xl/4xl
+  text-gold-soft (đồng bộ các trang còn lại).
+- Phase setup: step1 thành div căn giữa + divider gradient violet ngắn;
+  TopicGrid đẩy xuống mt-10.
+- Phase table/countdown/reveal:
+  - Topic label + Step đổi thành 2 "pill" (`rounded-full`, border
+    violet/white, count gold-soft) xếp ngang giữa.
+  - Bọc `<CardFan>` trong panel `rounded-3xl border bg-white/5 p-4` +
+    glow `blur-3xl` bg-violet-600/15 phía sau (chỉ decoration, không chặn
+    click — pointer-events-none, -z-10), để dải bài nổi rõ hơn.
+- Phase table: nút xác nhận dùng `ActionButton` (rounded-full, ring-1
+  ring-white/10, giữ thumb rule disabled) — đồng bộ CTA HomePage.
+- Phase reveal: figcaption thêm hai dấu ✦ hai bên + gold-soft/70;
+  nút xem kết quả dùng `ActionButton`.
+
+### File đã sửa
+- src/pages/TopicPage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npx vitest run`: 7 files / **28 tests PASS** (không test TopicPage assert
+  chi tiết → không phá).
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 535ms; JS 290.30KB / gzip 91.21KB; CSS 43.27KB.
+- Dist CSS verify (node đọc build): `rounded-3xl`, `rounded-full`,
+  `blur-3xl`, `border-violet-400/30`, `ring-1` đều present → Tailwind sinh
+  thật.
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual glow panel + pill + lật 3 lá cần browser thật — luật cấm start
+  server, user tự `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — Làm đẹp trang /question-reading (phiên này)
+
+### Phạm vi
+`src/pages/QuestionPage.tsx` — áp đúng style «mystical» đã dùng cho
+/tarot-reading (Ornament, serif gold, pill, panel glow, rounded-full).
+Vì TopicPage lẫn QuestionPage giờ cần 2 helper giống nhau, tách ra shared
+components (tránh duplicate): `Ornament` + `ActionButton`.
+
+### Đã thay đổi
+1. `src/components/Ornament.tsx` (MỚI): divider đối xứng gold + label
+   uppercase — tách từ helper local của TopicPage.
+2. `src/components/ActionButton.tsx` (MỚI): nút rounded-full gradient
+   indigo-violet + ring-1 + disabled rule — tách từ helper local.
+3. `src/pages/TopicPage.tsx`: refactor import 2 helper từ components thay
+   vì định nghĩa local (thuần đổi chỗ, không đổi UI của /tarot-reading).
+4. `src/pages/QuestionPage.tsx`: recompose 3 phase như TopicPage:
+   - Header: `Ornament "Tarot"` + h1 font-serif text-3xl/4xl gold-soft.
+   - Phase setup: step1 căn giữa + divider gradient violet; QuestionInput
+     mt-10.
+   - Phase table/countdown/reveal: 2 pill (questionLabel + step2 + count
+     gold-soft) + bọc CardFan trong panel `rounded-3xl border bg-white/5
+     p-4` + glow `blur-3xl` violet-600/15 phía sau.
+   - Phase table/reveal: ActionButton; figcaption ✦ + gold-soft/70.
+5. `src/i18n/messages.ts`: thêm `question.step2` (vi/en) + đổi
+   `question.questionLabel` bỏ dấu `:` cuối (vì pill hiển thị câu hỏi với
+   dấu ngoặc kép bên cạnh).
+
+### File đã sửa
+- src/components/Ornament.tsx (mới)
+- src/components/ActionButton.tsx (mới)
+- src/pages/QuestionPage.tsx
+- src/pages/TopicPage.tsx (refactor import shared)
+- src/i18n/messages.ts
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 564ms; JS 290.91KB / gzip 91.19KB; CSS 43.22KB;
+  54 modules (tăng 2 do file shared mới).
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual glow panel + pill + lật 3 lá (question) cần browser thật — user
+  tự `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.

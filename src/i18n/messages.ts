@@ -60,7 +60,8 @@ export const messages: Record<Locale, Dict> = {
 
     'question.title': 'Trải bài theo câu hỏi',
     'question.step1': 'Gửi một câu hỏi rõ ràng (20–200 ký tự), hệ thống sẽ kiểm tra rồi mở bàn bài cho bạn rút 3 lá.',
-    'question.questionLabel': 'Câu hỏi:',
+    'question.step2': 'Bước 2: chọn đúng 3 lá bài',
+    'question.questionLabel': 'Câu hỏi',
     'question.confirm': 'Xác nhận 3 lá',
     'question.card': 'Lá {n}',
     'question.viewResult': 'Xem kết quả luận giải',
@@ -168,7 +169,8 @@ export const messages: Record<Locale, Dict> = {
 
     'question.title': 'Question Spread',
     'question.step1': 'Submit a clear question (20–200 characters); the system will validate it then open the table for you to draw 3 cards.',
-    'question.questionLabel': 'Question:',
+    'question.step2': 'Step 2: pick exactly 3 cards',
+    'question.questionLabel': 'Question',
     'question.confirm': 'Confirm 3 cards',
     'question.card': 'Card {n}',
     'question.viewResult': 'View the reading',
