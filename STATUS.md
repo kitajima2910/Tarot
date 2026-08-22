@@ -2189,3 +2189,44 @@ filter/search/zoom, i18n, FlipCard, CardZoom 3 cột Xuôi-Ngược. Dùng share
 - Visual lưới card + modal zoom khung vuông cần browser thật — user tự
   `npm run dev` soi.
 - Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — Làm đẹp trang /about (phiên này)
+
+### Phạm vi
+`src/pages/AboutPage.tsx` — article prose, áp style «mystical» đồng bộ
+(Ornament serif gold header, card intro có brand mark, heading kèm accent
+gold line, step list dạng chip số, box note khung gold). Giữ nguyên text
+i18n `about.*` (không đổi nội dung). Dùng shared `Ornament`.
+
+### Đã thay đổi (1 file)
+- Header: `Ornament "Mystic"` + h1 font-serif text-3xl/4xl gold-soft căn
+  giữa.
+- Intro: chuyển thành card `rounded-2xl border bg-gradient-to-b
+  from-white/5 to-transparent p-6` — đỉnh card là brand mark ✦
+  (h-10 w-10 gradient) + đường kẻ gradient violet (separator).
+- Section "Tarot là gì?" & "Cách dùng site": h2 thêm accent mảnh
+  `h-px w-8 bg-gradient gold-soft/60` phía trước (gold line); body text
+  slate-300 leading-relaxed.
+- Step list: bỏ `list-decimal pl-6` → 4 row `<li>` mỗi hàng có chip tròn
+  số thứ tự (h-6 w-6, bg-violet-500/15, ring violet-400/30) + text cạnh;
+  space-y-3.
+- Box lưu ý: `rounded-xl border-white/10 bg-white/5` → `rounded-2xl
+  border-gold-soft/25 bg-gold-soft/5` + prefix ✦ gold (đồng bộ note box
+  các trang).
+
+### File đã sửa
+- src/pages/AboutPage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 722ms; JS 292.55KB / gzip 91.42KB; CSS 45.35KB.
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual card intro + step chip + note box cần browser thật — user tự
+  `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.
