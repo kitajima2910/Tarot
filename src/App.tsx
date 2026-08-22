@@ -4,6 +4,7 @@ import { CursorGlow } from './components/CursorGlow'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { StarField } from './components/StarField'
+import { useI18n } from './i18n/useI18n'
 import { AboutPage } from './pages/AboutPage'
 import { AllCardsPage } from './pages/AllCardsPage'
 import { ContactPage } from './pages/ContactPage'
@@ -28,23 +29,28 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
   render() {
     if (this.state.hasError) {
-      return (
-        <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-          <h1 className="text-2xl font-bold text-white">Đã xảy ra lỗi</h1>
-          <p className="mt-3 text-slate-400">
-            Phiên rút bài gặp sự cố. Vui lòng thử lại từ đầu.
-          </p>
-          <Link
-            to="/"
-            className="mt-6 inline-block rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-8 py-3 font-semibold text-white transition hover:brightness-110"
-          >
-            Về trang chủ
-          </Link>
-        </div>
-      )
+      return <ErrorFallback />
     }
     return this.props.children
   }
+}
+
+function ErrorFallback() {
+  const { t } = useI18n()
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+      <h1 className="text-2xl font-bold text-white">{t('error.title')}</h1>
+      <p className="mt-3 text-slate-400">
+        {t('error.body')}
+      </p>
+      <Link
+        to="/"
+        className="mt-6 inline-block rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-8 py-3 font-semibold text-white transition hover:brightness-110"
+      >
+        {t('error.home')}
+      </Link>
+    </div>
+  )
 }
 
 export default function App() {

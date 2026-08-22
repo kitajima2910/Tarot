@@ -1,19 +1,20 @@
 import { useState } from 'react'
+import { useI18n } from '../i18n/useI18n'
 
 export function ContactPage() {
+  const { t } = useI18n()
   const [sent, setSent] = useState(false)
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-bold text-white">Liên hệ</h1>
+      <h1 className="text-3xl font-bold text-white">{t('contact.title')}</h1>
       <p className="mt-3 text-slate-300">
-        Bạn có góp ý về trải nghiệm rút bài? Để lại lời nhắn, chúng tôi sẽ phản hồi trong
-        vài ngày làm việc.
+        {t('contact.intro')}
       </p>
 
       {sent ? (
         <p role="status" className="mt-8 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-emerald-200">
-          Cảm ơn bạn! Lời nhắn đã được ghi nhận (demo — chưa có backend).
+          {t('contact.sent')}
         </p>
       ) : (
         <form
@@ -24,7 +25,7 @@ export function ContactPage() {
           }}
         >
           <div>
-            <label htmlFor="name" className="mb-1 block text-sm text-slate-300">Tên của bạn</label>
+            <label htmlFor="name" className="mb-1 block text-sm text-slate-300">{t('contact.name')}</label>
             <input
               id="name"
               required
@@ -32,7 +33,7 @@ export function ContactPage() {
             />
           </div>
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm text-slate-300">Email</label>
+            <label htmlFor="email" className="mb-1 block text-sm text-slate-300">{t('contact.email')}</label>
             <input
               id="email"
               type="email"
@@ -41,7 +42,7 @@ export function ContactPage() {
             />
           </div>
           <div>
-            <label htmlFor="message" className="mb-1 block text-sm text-slate-300">Lời nhắn</label>
+            <label htmlFor="message" className="mb-1 block text-sm text-slate-300">{t('contact.message')}</label>
             <textarea
               id="message"
               rows={5}
@@ -54,7 +55,7 @@ export function ContactPage() {
             type="submit"
             className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-8 py-3 font-semibold text-white transition hover:brightness-110"
           >
-            Gửi lời nhắn
+            {t('contact.submit')}
           </button>
         </form>
       )}

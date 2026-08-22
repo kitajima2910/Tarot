@@ -37,13 +37,19 @@ export interface QuestionValidation {
   error?: string
 }
 
-export function validateQuestion(raw: string): QuestionValidation {
+export function validateQuestion(raw: string, locale: 'vi' | 'en' = 'vi'): QuestionValidation {
   const q = raw.trim()
   if (q.length < QUESTION_MIN) {
-    return { ok: false, error: `Câu hỏi cần ít nhất ${QUESTION_MIN} ký tự.` }
+    return {
+      ok: false,
+      error: locale === 'en' ? `Question must be at least ${QUESTION_MIN} characters.` : `Câu hỏi cần ít nhất ${QUESTION_MIN} ký tự.`,
+    }
   }
   if (q.length > QUESTION_MAX) {
-    return { ok: false, error: `Câu hỏi tối đa ${QUESTION_MAX} ký tự.` }
+    return {
+      ok: false,
+      error: locale === 'en' ? `Question must be at most ${QUESTION_MAX} characters.` : `Câu hỏi tối đa ${QUESTION_MAX} ký tự.`,
+    }
   }
   return { ok: true }
 }

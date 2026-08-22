@@ -1,5 +1,7 @@
 import { TOPICS } from '../data/topics'
 import type { Topic } from '../data/topics'
+import { useI18n } from '../i18n/useI18n'
+import { topicName, topicTagline } from '../i18n/localize'
 
 interface TopicGridProps {
   onPick: (topic: Topic) => void
@@ -8,6 +10,7 @@ interface TopicGridProps {
 const TOPIC_ICONS = ['♥', '⚒', '✚', '◈']
 
 export function TopicGrid({ onPick }: TopicGridProps) {
+  const { locale } = useI18n()
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {TOPICS.map((t, i) => (
@@ -21,8 +24,8 @@ export function TopicGrid({ onPick }: TopicGridProps) {
           <span className="mb-3 block text-3xl text-violet-300 transition group-hover:scale-110">
             {TOPIC_ICONS[i]}
           </span>
-          <span className="block font-semibold text-white">{t.name}</span>
-          <span className="mt-1 block text-xs leading-relaxed text-slate-400">{t.tagline}</span>
+          <span className="block font-semibold text-white">{topicName(t, locale)}</span>
+          <span className="mt-1 block text-xs leading-relaxed text-slate-400">{topicTagline(t, locale)}</span>
         </button>
       ))}
     </div>

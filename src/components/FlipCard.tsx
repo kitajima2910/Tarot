@@ -1,11 +1,14 @@
 import { cardById } from '../data/cards'
 import { cardImage } from '../data/cardImages'
 import type { DrawnCard } from '../lib/tarot'
+import { useI18n } from '../i18n/useI18n'
+import { cardKeywordsUpright, cardName } from '../i18n/localize'
 
 const SIZE = {
   sm: 'w-24 h-40 text-[10px]',
   md: 'w-32 h-52 text-xs',
   lg: 'w-48 h-80 text-sm',
+  xl: 'w-[500px] h-[836px] text-base',
 } as const
 
 interface FlipCardProps {
@@ -14,12 +17,16 @@ interface FlipCardProps {
   size?: keyof typeof SIZE
   revealed?: boolean
   showBadge?: boolean
+  objectFit?: 'cover' | 'contain'
 }
 
-export function FlipCard({ card, onFlip, size = 'md', revealed = false, showBadge = true }: FlipCardProps) {
+export function FlipCard({ card, onFlip, size = 'md', revealed = false, showBadge = true, objectFit = 'cover' }: FlipCardProps) {
+  const { locale } = useI18n()
   const info = cardById(card.id)
   const image = cardImage(card.id)
   const reversed = card.orientation === 'reversed'
+  const name = cardName(info, locale)
+  const keywords = cardKeywordsUpright(info, locale)
   return (
     <div
       className={`flip-perspective ${SIZE[size]} shrink-0 cursor-pointer`
@@ -29,8 +36,8 @@ export function FlipCard({ card, onFlip, size = 'md', revealed = false, showBadg
       <div className={`flip-inner relative h-full w-full ${revealed ? 'is-flipped' : ''}`}>
         <div className="flip-face card-back absolute inset-0 rounded-xl border border-indigo-400/30 shadow-lg shadow-indigo-950/50">
           <div className="p-4 text-slate-300 text-xs">
-            <p className="font-medium text-gold-soft uppercase tracking-wider">{info.nameEn}</p>
-            <p className="mt-2 line-clamp-3">{info.keywordsUpright}</p>
+            <p className="font-medium text-gold-soft uppercase tracking-wider">{name}</p>
+            <p className="mt-2 line-clamp-3">{keywords}</p>
           </div>
         </div>
         <div
@@ -41,15 +48,17 @@ export function FlipCard({ card, onFlip, size = 'md', revealed = false, showBadg
               <div className={`absolute inset-0 ${reversed ? 'rotate-180' : ''}`}>
                 <img
                   src={image}
-                  alt={info.nameEn}
+                  alt={name}
                   loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className={`absolute inset-0 h-full w-full ${
+                    objectFit === 'contain' ? 'object-contain' : 'object-cover'
+                  }`}
                 />
               </div>
             )}
             {image && showBadge && (
               <span className="name-badge absolute inset-x-0 top-0 z-10 px-2 py-1 text-[10px] font-medium tracking-wide text-slate-100">
-                {info.nameEn}
+                {name}
               </span>
             )}
           </div>

@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { cardById } from '../data/cards'
+import { I18nProvider } from '../i18n/I18nProvider'
 import { FlipCard } from './FlipCard'
 
 let container: HTMLDivElement
@@ -12,6 +13,7 @@ beforeEach(() => {
   container = document.createElement('div')
   document.body.appendChild(container)
   root = createRoot(container)
+  localStorage.setItem('tarot-clone-locale', 'en')
 })
 
 afterEach(() => {
@@ -23,7 +25,9 @@ function renderCard(orientation: 'upright' | 'reversed') {
   const info = cardById(9)
   act(() => {
     root.render(
-      <FlipCard card={{ id: 9, orientation }} revealed />,
+      <I18nProvider>
+        <FlipCard card={{ id: 9, orientation }} revealed />
+      </I18nProvider>,
     )
   })
   return info

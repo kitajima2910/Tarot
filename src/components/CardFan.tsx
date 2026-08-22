@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import type { DrawnCard } from '../lib/tarot'
+import { useI18n } from '../i18n/useI18n'
 import { FlipCard } from './FlipCard'
 
 interface CardFanProps {
@@ -11,6 +12,7 @@ interface CardFanProps {
 }
 
 export function CardFan({ deck, selectedIds, hiddenIds, interactive, onSelect }: CardFanProps) {
+  const { t } = useI18n()
   const scroller = useRef<HTMLDivElement>(null)
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: 0 })
 
@@ -56,7 +58,7 @@ export function CardFan({ deck, selectedIds, hiddenIds, interactive, onSelect }:
               type="button"
               disabled={!interactive || hiddenIds.has(c.id)}
               aria-pressed={picked}
-              aria-label={`Lá bài thứ ${i + 1}`}
+              aria-label={t('fan.card', { n: i + 1 })}
               onClick={() => onSelect(c.id)}
               className={`transition-all duration-500 ${
                 hiddenIds.has(c.id) ? 'fly-out pointer-events-none' : picked ? '-translate-y-4' : 'hover:-translate-y-3'
@@ -76,7 +78,7 @@ export function CardFan({ deck, selectedIds, hiddenIds, interactive, onSelect }:
                         : 'bg-white/5 text-slate-600'
                   }`}
                 >
-                  {picked ? 'Đã chọn' : interactive ? 'Chọn' : ''}
+                  {picked ? t('fan.chosen') : interactive ? t('fan.select') : ''}
                 </span>
               </span>
             </button>

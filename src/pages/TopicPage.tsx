@@ -7,10 +7,13 @@ import { TopicGrid } from '../components/TopicGrid'
 import { chosenCards, useDrawFlow } from '../hooks/useDrawFlow'
 import type { Topic } from '../data/topics'
 import { saveSession } from '../lib/session'
+import { useI18n } from '../i18n/useI18n'
+import { topicName } from '../i18n/localize'
 
 export function TopicPage() {
   const navigate = useNavigate()
   const flow = useDrawFlow()
+  const { t, locale } = useI18n()
   const [topic, setTopic] = useState<Topic | null>(null)
   const [revealedCount, setRevealedCount] = useState(0)
   const selected = chosenCards(flow.deck, flow.selectedIds)
@@ -21,8 +24,8 @@ export function TopicPage() {
   useEffect(() => {
     if (flow.phase !== 'reveal') return
     if (revealedCount >= 3) return
-    const t = setTimeout(() => setRevealedCount((n) => n + 1), revealedCount === 0 ? 600 : 400)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setRevealedCount((n) => n + 1), revealedCount === 0 ? 600 : 400)
+    return () => clearTimeout(timer)
   }, [flow.phase, revealedCount])
 
   const viewResult = () => {
@@ -32,12 +35,12 @@ export function TopicPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="text-center text-3xl font-bold text-white">Tra cứu Tarot theo chủ đề</h1>
+      <h1 className="text-center text-3xl font-bold text-white">{t('topic.title')}</h1>
 
       {flow.phase === 'setup' && (
         <>
           <p className="mx-auto mt-2 max-w-xl text-center text-sm text-slate-400">
-            Bước 1 — chọn chủ đề bạn muốn hỏi.
+            {t('topic.step1')}
           </p>
           <div className="mt-8">
             <TopicGrid onPick={(t) => { setTopic(t); flow.start() }} />
@@ -48,8 +51,8 @@ export function TopicPage() {
       {(flow.phase === 'table' || flow.phase === 'countdown' || flow.phase === 'reveal') && (
         <>
           <p className="mt-2 text-center text-sm text-slate-400">
-            Chủ đề: <span className="font-semibold text-violet-300">{topic?.name}</span>
-            {' — '}Bước 2: chọn đúng 3 lá bài ({flow.selectedIds.length}/3).
+            {t('topic.topicLabel')} <span className="font-semibold text-violet-300">{topicName(topic, locale)}</span>
+            {' — '}{t('topic.step2')} ({flow.selectedIds.length}/3).
           </p>
           <CardFan
             deck={flow.deck}
@@ -69,7 +72,7 @@ export function TopicPage() {
             onClick={flow.beginCountdown}
             className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-10 py-3 font-semibold text-white shadow-lg shadow-indigo-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Xác nhận 3 lá
+            {t('topic.confirm')}
           </button>
         </div>
       )}
@@ -80,7 +83,7 @@ export function TopicPage() {
             <figure key={c.id} className="text-center">
               <FlipCard card={c} revealed={i < revealedCount} size="lg" />
               <figcaption className="mt-2 text-xs uppercase tracking-widest text-slate-500">
-                Lá {i + 1}
+                {t('topic.card', { n: i + 1 })}
               </figcaption>
             </figure>
           ))}
@@ -94,7 +97,7 @@ export function TopicPage() {
             onClick={viewResult}
             className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-10 py-3 font-semibold text-white shadow-lg shadow-indigo-950/40 transition hover:brightness-110"
           >
-            Xem kết quả luận giải
+            {t('topic.viewResult')}
           </button>
         </div>
       )}

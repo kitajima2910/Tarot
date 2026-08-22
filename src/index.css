@@ -2,7 +2,7 @@
 
 @theme {
   --font-sans: "Mulish", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
   --color-gold: #d4af37;
   --color-gold-soft: #e9cf8f;
 }

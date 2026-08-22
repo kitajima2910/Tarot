@@ -1704,3 +1704,354 @@ GIỮ tên phía dưới (dòng `{nn}. {nameEn}` + `{name} · SUIT_LABEL`).
 - Trang khác vẫn hiện badge tên trên ảnh (mặc định) — đúng phạm vi user
   chọn, chỉ bỏ ở /card-meanings.
 - Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase FIX — HomePage: bỏ title name che 3 lá bài hero (phiên này)
+
+### Root cause
+HomePage.tsx:38 render 3 lá hero `<FlipCard card={c} revealed size="lg" />`
+KHÔNG truyền `showBadge={false}` → `showBadge` default `true` → badge
+`.name-badge` (tên lá, top-0) đè lên ảnh lá bài ở trang home. Phase
+`/card-meanings` trước chỉ truyền `showBadge={false}` cho AllCardsPage;
+HomePage bị bỏ sót (3 lá vẫn bị badge che).
+
+### Đã sửa (patch 1 dòng)
+- `src/pages/HomePage.tsx:38`: `<FlipCard card={c} revealed size="lg"
+  showBadge={false} />` — giống AllCardsPage, bỏ title tên che ảnh.
+  Không đụng 7 chỗ dùng khác (CardFan, TopicPage, QuestionPage,
+  TopicResultPage, QuestionResultPage) — đúng phạm vi user yêu cầu.
+
+### File đã sửa
+- src/pages/HomePage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx vitest run`: 7 files / **28 tests PASS**, không test nào assert
+  HomePage badge → patch không phá suite.
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 483ms; JS 272.31KB / gzip 85.31KB; CSS 38.35KB.
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+- grep `<FlipCard`: 10 chỗ; chỉ AllCardsPage (2) + HomePage (1) truyền
+  `showBadge={false}`; còn 7 chỗ không truyền → badge mặc định giữ
+  nguyên (CardFan, TopicPage, QuestionPage, 2 result pages).
+
+### Vấn đề còn lại
+- Visual (3 lá hero sạch badge, ảnh tràn khung) cần browser thật — luật
+  cấm start server, user tự `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên (Deviation block reduced-motion vòng trước
+  vẫn chờ re-review sign-off; BUG-001 đã fix ở phiên trước khác).
+
+## Phase CODE — Zoom lá bài hiện đúng tỉ lệ ảnh original (phiên này)
+
+### Root cause
+Modal zoom (`CardZoom`, AllCardsPage.tsx:121) render `<FlipCard ... size="md">`.
+SIZE map md = `w-32 h-52` (box ratio 0.615) + `object-cover` → buộc ảnh
+crop theo box. Trong khi asset THẬT không đồng nhất như STATUS.md mục A
+từng ghi "360x615":
+- 22 lá Ẩn chính: **500x836** (ratio 0.598)
+- 56 lá Ẩn phụ (4 bộ): **360x615** (ratio 0.585)
+→ object-cover cắt ảnh để lấp box 0.615, zoom không còn đúng tỉ lệ gốc,
+đúng lỗi TARGET.
+
+### Đã thay đổi (patch scoped, 2 file)
+1. `src/components/FlipCard.tsx`: thêm prop `objectFit?: 'cover' | 'contain'`
+   (default `'cover'`). `<img>` dùng class full static `object-contain`/`object-cover`
+   khi chọn Tailwind (KHÔNG dùng template `object-${...}` vì Tailwind không
+   quét được class sinh động). Default giữ nguyên → 7 chỗ dùng khác
+   (CardFan, HomePage 3 lá, TopicPage, QuestionPage, 2 result pages) không đổi.
+2. `src/pages/AllCardsPage.tsx` `CardZoom`: đổi `size="md"` → `size="lg"`
+   (w-48 h-80, box ratio 0.6 — sát nhất khoảng 0.598/0.585 thật) + thêm
+   `objectFit="contain"` → hiện trọn ảnh gốc, không crop, letterbox nhẹ
+   đúng tỉ lệ. CardRow grid giữ nguyên (object-cover, phủ đều ô).
+
+### File đã sửa
+- src/components/FlipCard.tsx
+- src/pages/AllCardsPage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx vitest run`: 7 files / **28 tests PASS** (FlipCard.test.tsx không
+  assert object-fit → không phá).
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 541ms; JS 272.38KB / gzip 85.33KB; CSS 38.39KB.
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+- Đo độc lập lại asset trên disk (node đọc header PNG): major 500x836,
+  minor 360x615 — sửa mục A trước đây ghi sai "360x615 đồng nhất".
+
+### Vấn đề còn lại
+- Visual zoom (ảnh trọn tỉ lệ, letterbox, độ rộng 192px trong modal) cần
+  browser thật — luật cấm start server, user tự `npm run dev` soi. Trên
+  màn hình rất hẹp, modal lg (192x320) + text phía dưới có thể cao hơn
+  viewport — dán thêm `overflow-y-auto` cho overlay nếu user thấy tràn.
+- Ghi nhận data: `cardImages.ts` không phụ thuộc tỉ lệ nên không cần sửa.
+- Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — Zoom lá bài hiện ảnh 500x836 (phiên này)
+
+### Root cause / yêu cầu
+Phiên trước dùng `size="lg"` (w-48 h-80 = 192x320) + `object-contain`.
+User muốn ảnh zoom hiện đúng kích thước gốc 500x836.
+
+### Đã thay đổi (scoped, 2 file)
+1. `src/components/FlipCard.tsx`: thêm entry `xl: 'w-[500px] h-[836px] text-base'`
+   vào SIZE map — kích thước đúng 500x836 của asset Ẩn chính thật
+   (đo bằng header PNG phiên trước: major 500x836, minor 360x615).
+   Tailwind sinh `w-[500px]`/`h-[836px]` từ arbitrary value. Các size
+   sm/md/lg giữ nguyên.
+2. `src/pages/AllCardsPage.tsx` `CardZoom`: `size="lg"` → `size="xl"`
+   (500x836) + thêm `overflow-y-auto` ở overlay + `m-auto` ở content
+   → ảnh lớn không bị cắt trên viewport thấp, khóa cuộn body vẫn giữ.
+
+### File đã sửa
+- src/components/FlipCard.tsx
+- src/pages/AllCardsPage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 524ms; JS 272.44KB / gzip 85.37KB; CSS 38.49KB.
+- Dist CSS verify (node đọc build): `w-[500px]` width:500px present,
+  `h-[836px]` height:836px present → Tailwind sinh thật.
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Lưu ý: 56 lá Ẩn phụ gốc là 360x615 — ở size xl 500x836 (ratio 0.598)
+  + object-contain sẽ letterbox nhẹ (giữ tỉ lệ thật, không phóng méo).
+  Nếu muốn cả minor hiện nguyên 360x615 thì cần object-contain riêng theo
+  size gốc/lá — ghi là open-question, user quyết sau.
+- Visual zoom (500x836, letterbox major/minor, cuộn viewport thấp) cần
+  browser thật — luật cấm start server, user tự `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — Font huyền bí Playfair Display (VN + EN) (phiên này)
+
+### Root cause / quyết định (hỏi user)
+User muốn chọn font huyền bí phù hợp website tarot, hỗ trợ cả VN lẫn EN.
+Verify thật bằng Google Fonts css2 (UA Chrome, đọc subset/unicode-range):
+- LOẠI 6 font "mystical" phổ biến vì KHÔNG có subset Vietnamese: Cinzel,
+  Cinzel Decorative, Marcellus, Bodoni Moda, IM Fell English, Almendra SC
+  → bấm chữ Việt sẽ rơi về fallback, hỏng tiêu đề.
+- Font hỗ trợ VN+EN (subset "vietnamese" present): Cormorant Garamond,
+  Playfair Display, Fraunces, EB Garamond, Crimson Pro, Lora, Alegreya.
+- User chọn **Playfair Display** (Recommended): serif tương phản cao, nét
+  huyền bí/classic cho heading + tên lá bài.
+
+### Đã thay đổi (2 file, 2 dòng — thay Cormorant → Playfair)
+1. `index.html`: link Google Fonts `Cormorant+Garamond:wght@500;600;700`
+   → `Playfair+Display:wght@500;600;700` (giữ Mulish; font-serif dùng cho
+   heading/tên lá; font-sans Mulish giữ cho thân văn bản).
+2. `src/index.css`: `--font-serif: "Cormorant Garamond"` →
+   `"Playfair Display"`. Font-serif là 8 class `font-serif` (HomePage h1,
+   AllCardsPage h1, result pages h2, .name-badge) tự đổi theo token, không
+   sửa từng file.
+
+### File đã sửa
+- index.html
+- src/index.css
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 508ms; JS 272.44KB / gzip 85.37KB; CSS 38.49KB.
+- Dist verify (node đọc build): index.html chứa "Playfair", CSS
+  `--font-serif: "Playfair Display"` present, KHÔNG còn "Cormorant".
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Lưu ý: Playfair Display không có weight hiển thị "huyền bí tối đa"
+  (không có Cinzel vì thiếu VN) — chấp nhận tradeoff, đã hỏi user.
+- Visual chữ việt với Playfair (dấu ẻ/ộ/á trên Unicode Vietnamese) cần
+  browser thật — luật cấm start server, user tự `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên; ADR-003 ghi "Cormorant Garamond" giờ lệch
+  với code — cần cập nhật decisions.jsonl cùng phiên persist (không làm
+  ở đây, nợ persist.mjs mục 6).
+
+## Phase CODE — Zoom: Xuôi bên trái / Ngược bên phải ảnh (phiên này)
+
+### Root cause
+Trong `CardZoom` (AllCardsPage.tsx), nghĩa Xuôi + Ngược được xếp DỌC
+bên dưới ảnh (flow block, div `mt-4 text-center`): tên → Xuôi → Ngược,
+các `<p>` xếp chồng theo chiều dọc. Yêu cầu: khi zoom, Xuôi hiện BÊN
+TRÁI, Ngược hiện BÊN PHẢI ảnh.
+
+### Đã thay đổi (scoped, 1 file)
+- `src/pages/AllCardsPage.tsx` `CardZoom`: tách thành tiêu đề (tên + khí
+  chất, căn giữa phía trên) + hàng `flex flex-col items-center
+  justify-center gap-6 xl:flex-row xl:gap-10` chứa 3 cột:
+  1. Panel "Xuôi" (`max-w-xs`, `xl:text-right`) bên TRÁI ảnh.
+  2. `<FlipCard size="xl">` ở GIỮA.
+  3. Panel "Ngược" (`max-w-xs`, `xl:text-left`) bên PHẢI ảnh.
+  - Responsive: màn hẹp (< xl) xếp DỌC (Xuôi → ảnh → Ngược) để không
+    tràn; màn rộng (≥ xl, cần ~500px ảnh + 2 panel) xếp NGANG đúng yêu cầu.
+  - Nhãn "Xuôi"/"Ngược" là `<p>` nhỏ uppercase tracking; nội dung dùng
+    font-sans thân (không font-serif) cho dễ đọc luận giải.
+  - Overlay `overflow-y-auto` giữ nguyên → modal cao (500x836 ảnh + text)
+    vẫn cuộn được trên viewport thấp.
+
+### File đã sửa
+- src/pages/AllCardsPage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx vitest run`: 7 files / **28 tests PASS** (không test assert
+  CardZoom layout → không phá).
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 479ms; JS 272.91KB / gzip 85.43KB; CSS 38.75KB.
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual bố cục 3 cột (đối xứng Xuôi/Ngược, thụt phải-trái, ngắt dòng khi
+  nghĩa dài) cần browser thật — luật cấm start server, user tự
+  `npm run dev` soi. Trên viewport đủ rộng (≥1280px, xl) mới xếp ngang.
+- Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — Làm đẹp trang home (phiên này)
+
+### Phạm vi
+`src/pages/HomePage.tsx` — recompose 3 section, thuần presentation, giữ
+nguyên logic/route/props/FlipCard/TILTS/hero composition. Thêm 1 helper
+`Ornament` local.
+
+### Đã thay đổi (1 file)
+- Hero:
+  - Thêm eyebrow "✦ Tarot Online Miễn Phí ✦" (uppercase tracking 0.4em,
+    gold-soft/80).
+  - Subtitle đổi sang font-serif text-lg/xl (đậm chất huyền bí hơn).
+  - 2 nút CTA đổi `rounded-xl` → `rounded-full`, nút chính thêm ring-1
+    ring-white/10.
+  - Dải 3 lá hero bọc thêm 1 glow `blur-3xl` bg-violet-600/20 nằm
+    sau (-z-10) để làm nổi bài.
+- Section "Bốn Mảng Cuộc Sống": thêm ornament divider (2 đuôi gradient
+  gold + label uppercase), tiêu đề font-serif, card topic thêm hover
+  -translate-y-1 + shadow + dấu ✦ gold trước tên (group-hover đổi màu),
+  padding tăng p-6.
+- Section "78 Lá Bài": thêm ornament, tiêu đề font-serif text-3xl, nền
+  đổi `bg-black/30` → gradient `from-white/5 to-transparent`, CTA đổi
+  rounded-full + border/text gold-soft.
+- Helper `Ornament({ text })`: divider đối xứng (hai thanh gradient
+  gold-soft/40 h-px) + label uppercase tracking 0.35em — tái dùng 2 lần,
+  zero dependency, zero CSS mới (thuần Tailwind class).
+
+### File đã sửa
+- src/pages/HomePage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx vitest run`: 7 files / **28 tests PASS** (không test HomePage
+  assert chi tiết).
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 615ms; JS 274.12KB / gzip 85.74KB; CSS 41.77KB
+  (tăng từ 38.75KB — chứng tỏ các class mới được Tailwind sinh).
+- Dist CSS verify (node đọc build): `blur-3xl`, `tracking-[0.4em]`,
+  `text-gold-soft`, `border-gold-soft` đều present.
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual thực tế (glow sau 3 lá, ornament alignment, hover topic card)
+  cần browser thật — luật cấm start server, user tự `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên (ADR-003 font "Cormorant Garamond" giờ lệch
+  code Playfair — cập nhật decisions.jsonl khi ghi persist).
+
+## Phase CODE — Đa ngôn ngữ VN/EN (phiên này)
+
+### Quyết định (hỏi user)
+User chọn phạm vi **"UI + toàn bộ nghĩa bài"** (đầy đủ: dịch cả UI lẫn
+78×2 chuỗi keywords/suit + prose luận giải sang EN).
+
+### Kiến trúc (zero dependency, không thêm npm)
+- `src/i18n/messages.ts`: `Locale = 'vi'|'en'`, dict `messages[locale]`
+  (flat key→string), `translate(locale, key, params)` với interpolation
+  `{n}` (replaceAll, type `TFunction`). ~90 chrome keys × 2 locale.
+- `src/i18n/I18nProvider.tsx`: CHỈ export component `I18nProvider`:
+  `useState` đọc `localStorage['tarot-clone-locale']` (default `vi`);
+  `useEffect` gắn `document.documentElement.lang` + `document.title` + meta
+  description theo locale; `t` = useMemo quanh `translate(locale, ...)`.
+- `src/i18n/useI18n.ts`: CHỈ export hook `useI18n()` + `I18nContext` (tách
+  riêng để thoả `react/only-export-components`/Fast Refresh).
+- `src/i18n/localize.ts`: selector theo locale: `cardName`,
+  `cardKeywordsUpright/Reversed`, `cardKeywords`, `suitLabel`, `topicName`,
+  `topicTagline`.
+
+### Dữ liệu song ngữ
+- `src/data/cards.ts`:
+  - `TarotCard` + `keywordsUprightEn`/`keywordsReversedEn`.
+  - `major` tuple mở rộng `[nameVN, nameEN, upVN, revVN, upEN, revEN]`
+    (22 lá, dịch đủ 44 chuỗi — giữ BẪY: id 8 The Chariot, 9 Strength,
+    11 The Wheel, 21 Judgement, 65 Ace of Pentacles).
+  - `ranks` + `gistEn`; `suitMeta` + `upEn`/`revEn`; loop sinh minor EN
+    `keywordsUprightEn = '${gistEn} in ${upEn}'`, `keywordsReversedEn =
+    '${gistEn} stalling — ${revEn}'` — không hardcode 56×2.
+  - `SUIT_LABEL_EN` (Major Arcana/Wands/Cups/Swords/Pentacles); giữ
+    `SUIT_LABEL` VN nguyên cho tests.
+- `src/data/topics.ts`: `Topic` + `nameEn`/`taglineEn`.
+- `src/lib/reading.ts`: thêm param `locale: Locale = 'vi'` (default giữ VN
+  → tests cũ xanh). `POSITION_LABELS`/`ORIENTATION_LABEL`/`SUIT_ADVICE`
+  thành `Record<Locale, ...>`; prose meaning/summary/namesLine localize;
+  `ReadingCard.name` vẫn là tên VN (field cũ), h2 hiển thị nameEn.
+- `src/lib/tarot.ts`: `validateQuestion(raw, locale='vi')` — lỗi ít/max ký
+  tự theo locale (tests dùng default vi, chỉ assert `.ok`).
+
+### Giao diện & wiring
+- `main.tsx`: bọc `<I18nProvider>` quanh `<BrowserRouter>`.
+- `Header.tsx`: nút công tắc `EN`/`VI` (toggle `setLocale`), nav + brand
+  qua `t()`, aria-label menu mở qua `t()`.
+- `Footer.tsx`: brand/cột/desc/disclaimer qua `t()`.
+- `App.tsx` ErrorBoundary → `ErrorFallback()` dùng `t()`.
+- 9 trang + component: HomePage, TopicPage, QuestionPage, TopicResultPage,
+  QuestionResultPage, AllCardsPage (filter/search/card list/zoom Xuôi-Ngược
+  localize), AboutPage, ContactPage, QuestionInput, CardFan, TopicGrid,
+  FlipCard (name/keywords/alt/badge localize).
+- `index.html`: giữ VI default (lang/title/description đè động bởi provider).
+
+### File đã sửa
+- src/i18n/messages.ts, I18nProvider.tsx, useI18n.ts, localize.ts (mới)
+- src/data/cards.ts, topics.ts
+- src/lib/reading.ts, tarot.ts
+- src/main.tsx
+- src/components/Header.tsx, Footer.tsx, FlipCard.tsx, CardFan.tsx,
+  TopicGrid.tsx, QuestionInput.tsx
+- src/pages/HomePage.tsx, TopicPage.tsx, QuestionPage.tsx,
+  TopicResultPage.tsx, QuestionResultPage.tsx, AllCardsPage.tsx,
+  AboutPage.tsx, ContactPage.tsx
+- src/App.tsx, src/components/FlipCard.test.tsx (bọc I18nProvider +
+  set localStorage locale 'en' để assertions giữ nameEn)
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npx vitest run`: 7 files / **28 tests PASS** — FlipCard.test.tsx sửa
+  (set localStorage 'en' trước render; assert theo nameEn); cards.test.ts
+  giữ pass vì nameEn/name không đổi.
+- `npm run lint` (oxlint): 0 lỗi — chạy lại SAU khi tách useI18n, đã hết 2
+  warning `react(only-export-components)`; còn đúng 4 warning cũ StarField
+  Math.random (ngoài TARGET).
+- Xác minh đủ 78 lá EN keywords không rỗng (temp test đưa vào src rồi gỡ):
+  2 test spot-check PASS (Ace of Wands id23, Strength id9, Ace of
+  Pentacles id65).
+- `npm run build`: OK 717ms; JS 289.09KB / gzip 90.96KB (tăng từ ~274KB do
+  dict 2 ngôn ngữ); CSS 42.20KB; dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- UI prose VN/EN dịch tương đối; ngữ pháp EN của 56 minor keywords là mẫu
+  máy ("beginnings in passion, action and career") — đơn giản, chấp nhận;
+  có thể chỉnh thủ công từng lá nếu user muốn sắc hơn.
+- `.memory/` chưa persist (persist.mjs thiếu — nợ mục 6): nên ghi ADR-006
+  (kiến trúc i18n context + selectors, locale trong localStorage, prose
+  localize) khi phiên persist kế tiếp.
+- Visual công tắc EN/VI, font EN dài hơn VN (Playfair) có thể overflow tràn
+  nhẹ trên mobile — cần browser thật (`npm run dev`).
+- Nợ cũ mục 1-8 giữ nguyên (BUG-001 đã fix, coverage <60%, CardFan mobile,
+  route 404, runtime thiếu, visual browser check, dist +46MB giờ thêm dict).
