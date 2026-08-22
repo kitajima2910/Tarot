@@ -2150,3 +2150,42 @@ components (tránh duplicate): `Ornament` + `ActionButton`.
 - Visual glow panel + pill + lật 3 lá (question) cần browser thật — user
   tự `npm run dev` soi.
 - Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — Làm đẹp trang /card-meanings (phiên này)
+
+### Phạm vi
+`src/pages/AllCardsPage.tsx` — áp style «mystical» đồng bộ (Ornament, serif
+gold header, pills, card-row framed, zoom modal framed). Giữ nguyên logic
+filter/search/zoom, i18n, FlipCard, CardZoom 3 cột Xuôi-Ngược. Dùng shared
+`Ornament` component.
+
+### Đã thay đổi (1 file)
+- Header: thêm `Ornament "Tarot"` + h1 font-serif text-3xl/4xl gold-soft
+  (đồng bộ các trang khác); subtitle text-sm.
+- Filter pills: active đổi `bg-violet-500` → gradient indigo-violet +
+  ring-1 ring-white/20; inactive thêm border white/10 + hover
+  border-violet-400/40. Grid gap-3 → gap-4; mt-8 → mt-10.
+- `CardRow`: đổi `rounded-xl bg-white/5` → `rounded-2xl bg-gradient-to-b
+  from-white/5 to-transparent` + hover -translate-y-1 + shadow violet;
+  tên lá tách thành div `mt-3 border-t border-white/10 px-4 pb-4 pt-3`
+  (đường kẻ mảnh tách title khỏi ảnh, dễ đọc hơn).
+- `CardZoom` modal: bọc nội dung trong khung `rounded-3xl border
+  border-white/10 bg-gradient-to-b from-white/5 to-transparent p-6` (giữ
+  3 cột Xuôi-[ảnh]-Ngược + overlay overflow-y-auto + m-auto).
+
+### File đã sửa
+- src/pages/AllCardsPage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 590ms; JS 291.37KB / gzip 91.26KB; CSS 43.49KB.
+- dist/AssetsTarot78 vẫn đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual lưới card + modal zoom khung vuông cần browser thật — user tự
+  `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.
