@@ -2389,3 +2389,59 @@ mặt sau đã có sẵn (`.card-back::before` viền kép gold + `.card-back::a
 - Visual xác nhận cuối cần browser thật — luật cấm start server,
   user tự `npm run dev` soi.
 - Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — /tarot-reading: thêm nút xáo bài trước khi trải bài (phiên này)
+
+### Root cause / yêu cầu
+Trước khi patch: sau khi chọn chủ đề → `flow.start()` → CardFan spread
+ngay → user chọn 3 lá. Không có bước xáo bài. User muốn: chọn chủ đề →
+nhấn "Xáo bài" → animation xáo → mới trải bài ra chọn.
+
+### Đã thay đổi (3 files, patch nhỏ nhất)
+1. `src/pages/TopicPage.tsx` — thêm 2 state local `shuffled` /
+   `isShuffling`, hàm `doShuffle()` (setTimeout 1500ms). Khi
+   `flow.phase === 'table' && !shuffled`: render UI xáo bài (5 lá bài
+   úp xếp chồng offset nhẹ + ActionButton "Xáo bài"). Khi xáo xong
+   (`shuffled === true`): hiện CardFan + pills + nút xác nhận như cũ.
+   Reset state khi chọn chủ đề mới qua TopicGrid onPick. Không đụng
+   useDrawFlow, không đổi API props/logic draw.
+2. `src/index.css` — thêm `.shuffle-card` (position absolute inset-0,
+   rounded-xl); `.shuffle-active .shuffle-card:nth-child(odd/even)`
+   animation shuffle-left/shuffle-right 0.12s linear infinite alternate;
+   2 keyframes translateX ±10px rotate ±5deg. Thêm `.shuffle-card` vào
+   block `prefers-reduced-motion` (animation: none). Tabs dependency
+   CSS tăng nhẹ (1.4KB raw).
+3. `src/i18n/messages.ts` — thêm 2 key: `topic.shuffleBtn` ("Xáo bài"
+   / "Shuffle"), `topic.shuffleHint` ("Nhấn để xáo bài trước khi chọn"
+   / "Tap to shuffle before picking") ở cả vi + en.
+
+### Flow mới trên /tarot-reading
+1. setup → chọn chủ đề → flow.start() → table phase
+2. table + !shuffled → hiện stack 5 lá úp + nút "Xáo bài"
+3. Nhấn nút → animation xáo 1.5s → stack biến mất → CardFan trải bài
+4. User chọn 3 lá → nút "Xác nhận 3 lá" hiện
+5. countdown → reveal → lật bài → xem kết quả
+
+### File đã sửa
+- src/pages/TopicPage.tsx
+- src/index.css
+- src/i18n/messages.ts
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx.cmd tsc -b`: exit 0, 0 lỗi.
+- `npx.cmd vitest run`: 7 files / **28 tests PASS** (không test TopicPage
+  assert chi tiết → không phá).
+- `npm.cmd run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField
+  Math.random (ngoài TARGET).
+- `npm.cmd run build`: OK 281ms; JS 293.83KB / gzip 91.75KB;
+  dist/AssetsTarot78 đủ **78 PNG**.
+- Dist CSS verify: `shuffle-left`, `shuffle-right`, `shuffle-active`
+  đều present.
+
+### Vấn đề còn lại
+- Visual animation xáo bài cần browser thật — luật cấm start server,
+  user tự `npm run dev` soi.
+- Gợi ý bổ sung (ngoài TARGET hiện tại): thêm riffle sound effect khi
+  xáo, hoặc hover effect trên stack — PM/user quyết sau.
+- Nợ cũ mục 1-8 giữ nguyên.

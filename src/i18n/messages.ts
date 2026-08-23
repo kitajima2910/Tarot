@@ -56,6 +56,8 @@ export const messages: Record<Locale, Dict> = {
     'topic.step2': 'Bước 2: chọn đúng 3 lá bài',
     'topic.confirm': 'Xác nhận 3 lá',
     'topic.card': 'Lá {n}',
+    'topic.shuffleBtn': 'Xáo bài',
+    'topic.shuffleHint': 'Nhấn để xáo bài trước khi chọn',
     'topic.viewResult': 'Xem kết quả luận giải',
 
     'question.title': 'Trải bài theo câu hỏi',
@@ -165,6 +167,8 @@ export const messages: Record<Locale, Dict> = {
     'topic.step2': 'Step 2: pick exactly 3 cards',
     'topic.confirm': 'Confirm 3 cards',
     'topic.card': 'Card {n}',
+    'topic.shuffleBtn': 'Shuffle',
+    'topic.shuffleHint': 'Tap to shuffle before picking',
     'topic.viewResult': 'View the reading',
 
     'question.title': 'Question Spread',

@@ -18,6 +18,8 @@ export function TopicPage() {
   const { t, locale } = useI18n()
   const [topic, setTopic] = useState<Topic | null>(null)
   const [revealedCount, setRevealedCount] = useState(0)
+  const [shuffled, setShuffled] = useState(false)
+  const [isShuffling, setIsShuffling] = useState(false)
   const selected = chosenCards(flow.deck, flow.selectedIds)
   const hiddenIds = new Set(
     flow.phase === 'reveal' ? flow.deck.filter((c) => !flow.selectedIds.includes(c.id)).map((c) => c.id) : [],
@@ -29,6 +31,12 @@ export function TopicPage() {
     const timer = setTimeout(() => setRevealedCount((n) => n + 1), revealedCount === 0 ? 600 : 400)
     return () => clearTimeout(timer)
   }, [flow.phase, revealedCount])
+
+  const doShuffle = () => {
+    if (isShuffling || shuffled) return
+    setIsShuffling(true)
+    setTimeout(() => { setIsShuffling(false); setShuffled(true) }, 1500)
+  }
 
   const viewResult = () => {
     saveSession({ type: 'topic', topicId: topic?.id, cards: selected })
@@ -49,12 +57,32 @@ export function TopicPage() {
             <div className="mx-auto mt-3 h-px w-24 bg-gradient-to-r from-transparent to-violet-400/40" />
           </div>
           <div className="mt-10">
-            <TopicGrid onPick={(t) => { setTopic(t); flow.start() }} />
+            <TopicGrid onPick={(t) => { setTopic(t); setShuffled(false); setIsShuffling(false); flow.start() }} />
           </div>
         </>
       )}
 
-      {(flow.phase === 'table' || flow.phase === 'countdown' || flow.phase === 'reveal') && (
+      {flow.phase === 'table' && !shuffled && (
+        <div className="mt-10 flex flex-col items-center gap-6">
+          <div className={`shuffle-stack relative h-40 w-24 ${isShuffling ? 'shuffle-active' : ''}`}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="shuffle-card card-back border border-indigo-400/30"
+                style={isShuffling ? undefined : {
+                  transform: `translateX(${(i - 2) * 3}px) rotate(${(i - 2) * 2}deg) translateY(${Math.abs(i - 2) * 2}px)`,
+                }}
+              />
+            ))}
+          </div>
+          <ActionButton onClick={doShuffle} disabled={isShuffling}>
+            {t('topic.shuffleBtn')}
+          </ActionButton>
+          <p className="text-xs text-slate-500">{t('topic.shuffleHint')}</p>
+        </div>
+      )}
+
+      {((flow.phase === 'table' && shuffled) || flow.phase === 'countdown' || flow.phase === 'reveal') && (
         <div className="mt-6">
           <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
             <span className="rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1">
@@ -80,7 +108,7 @@ export function TopicPage() {
         </div>
       )}
 
-      {flow.phase === 'table' && (
+      {flow.phase === 'table' && shuffled && (
         <div className="mt-6 text-center">
           <ActionButton disabled={flow.selectedIds.length < 3} onClick={flow.beginCountdown}>
             {t('topic.confirm')}

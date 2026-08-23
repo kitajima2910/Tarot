@@ -159,6 +159,30 @@ body {
   animation: modalZoom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.shuffle-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+}
+
+.shuffle-active .shuffle-card:nth-child(odd) {
+  animation: shuffle-left 0.12s linear infinite alternate;
+}
+
+.shuffle-active .shuffle-card:nth-child(even) {
+  animation: shuffle-right 0.12s linear infinite alternate;
+}
+
+@keyframes shuffle-left {
+  0% { transform: translateX(-10px) rotate(-5deg); }
+  100% { transform: translateX(10px) rotate(5deg); }
+}
+
+@keyframes shuffle-right {
+  0% { transform: translateX(10px) rotate(5deg); }
+  100% { transform: translateX(-10px) rotate(-5deg); }
+}
+
 @keyframes modalFade {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -180,7 +204,8 @@ body {
   .fly-out,
   .flip-inner,
   .modal-overlay,
-  .modal-zoom {
+  .modal-zoom,
+  .shuffle-card {
     animation: none;
     transition: none;
   }
