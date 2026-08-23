@@ -2343,3 +2343,49 @@ dòng khi wraps.
   trực quan bằng browser (cột lưới đều, wrap filter/search) — user tự
   `npm run dev` soi.
 - Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase FIX — /tarot-reading: rút bài chỉ thấy mặt sau lá, hết lộ tên (phiên này)
+
+### Root cause
+`src/components/FlipCard.tsx` mặt sau (`card-back`) vẫn render text
+`{name}` + `{keywords}` (thiết kế sót từ thời trước khi có ảnh — STATUS
+mục tích hợp assets từng ghi "chỉ text + glyph suit"). Khi rút bài,
+CardFan render `revealed={false}` → mặt úp hiện tên lá + keywords →
+lộ bài, không phải "mặt sau lá bài tarot" đúng nghĩa. Trang trí CSS
+mặt sau đã có sẵn (`.card-back::before` viền kép gold + `.card-back::after`
+✦ glow) nên chỉ cần bỏ khối text.
+
+### Đã thay đổi (patch nhỏ nhất, 1 file)
+- `src/components/FlipCard.tsx`: bỏ khối `<div className="p-4 ...">`
+  chứa tên + keywords trong card-back; bỏ luôn biến `keywords` và import
+  `cardKeywordsUpright` (hết dùng). Mặt úp giờ thuần trang trí: gradient
+  nền + viền kép gold + ✦ glow giữa lá. API props giữ nguyên; badge tên
+  trên mặt TRƯỚC (khi lật) giữ nguyên như cũ.
+- Phạm vi ảnh hưởng thực tế: CardFan (/tarot-reading và /question-reading
+  cùng cơ chế rút bài) + khoảnh khắc trước khi lật ở reveal phase của 2
+  trang này. Các chỗ khác (HomePage, 2 result pages, /card-meanings,
+  FlipCard.test) đều render mặt trước (`revealed=true`) → không đổi gì.
+  Không đụng logic draw/session/i18n.
+
+### File đã sửa
+- src/components/FlipCard.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx tsc -b`: exit 0 (không TS6133 unused — dọn sạch biến/import).
+- `npx vitest run`: 7 files / **28 tests PASS** (FlipCard.test render
+  revealed → assert mặt trước, không bị ảnh hưởng).
+- `npm.cmd run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField
+  Math.random (ngoài TARGET).
+- `npm.cmd run build`: OK 308ms; JS 292.97KB / gzip 91.49KB;
+  dist/AssetsTarot78 đủ **78 PNG**.
+- Ghi chú môi trường: PowerShell execution policy chặn npx.ps1/npm.ps1
+  → phải gọi `npx.cmd` / `npm.cmd` (các phiên sau dùng cách này).
+
+### Vấn đề còn lại
+- Mặt sau là CSS trang trí (không có asset ảnh mặt sau trong
+  public/AssetsTarot78 — chỉ có 78 mặt trước); nếu user muốn ảnh back
+  thật thì cần cung cấp thêm asset — open question cho PM/user.
+- Visual xác nhận cuối cần browser thật — luật cấm start server,
+  user tự `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.
