@@ -9,9 +9,17 @@ interface CardFanProps {
   hiddenIds: Set<number>
   interactive: boolean
   onSelect: (id: number) => void
+  layout?: 'linear' | 'circular'
 }
 
-export function CardFan({ deck, selectedIds, hiddenIds, interactive, onSelect }: CardFanProps) {
+/* ── Circular constants ─────────────────────────────────────────── */
+const C_RADIUS = 320
+const C_CARD_W = 44
+const C_CARD_H = 72
+const C_CONTAINER = 760
+
+/* ── Linear (original) ──────────────────────────────────────────── */
+function LinearFan({ deck, selectedIds, hiddenIds, interactive, onSelect }: Omit<CardFanProps, 'layout'>) {
   const { t } = useI18n()
   const scroller = useRef<HTMLDivElement>(null)
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: 0 })
@@ -26,14 +34,9 @@ export function CardFan({ deck, selectedIds, hiddenIds, interactive, onSelect }:
     drag.current.moved = Math.max(drag.current.moved, Math.abs(dx))
     scroller.current.scrollLeft = drag.current.startLeft - dx
   }
-  const endDrag = () => {
-    drag.current.active = false
-  }
+  const endDrag = () => { drag.current.active = false }
   const onClickCapture = (e: React.MouseEvent) => {
-    if (drag.current.moved > 6) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
+    if (drag.current.moved > 6) { e.preventDefault(); e.stopPropagation() }
   }
 
   const mid = (deck.length - 1) / 2
@@ -87,4 +90,73 @@ export function CardFan({ deck, selectedIds, hiddenIds, interactive, onSelect }:
       </div>
     </div>
   )
+}
+
+/* ── Circular fan ───────────────────────────────────────────────── */
+function CircularFan({ deck, selectedIds, hiddenIds, interactive, onSelect }: Omit<CardFanProps, 'layout'>) {
+  const { t } = useI18n()
+  const cx = C_CONTAINER / 2
+  const cy = C_CONTAINER / 2
+
+  return (
+    <div
+      className="relative mx-auto"
+      style={{ width: C_CONTAINER, height: C_CONTAINER }}
+    >
+      {/* centre glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-600/15 blur-3xl"
+      />
+
+      {deck.map((c, i) => {
+        const angleDeg = (i / deck.length) * 360 - 90
+        const angleRad = (angleDeg * Math.PI) / 180
+        const picked = selectedIds.includes(c.id)
+        const r = picked ? C_RADIUS + 18 : C_RADIUS
+        const x = cx + r * Math.cos(angleRad) - C_CARD_W / 2
+        const y = cy + r * Math.sin(angleRad) - C_CARD_H / 2
+        const rotation = angleDeg + 90
+        const isHidden = hiddenIds.has(c.id)
+        /* z-index: cards at bottom of circle sit in front */
+        const baseZ = Math.round(((angleDeg + 90) / 360) * 50) + 10
+
+        return (
+          <button
+            key={c.id}
+            type="button"
+            disabled={!interactive || isHidden}
+            aria-pressed={picked}
+            aria-label={t('fan.card', { n: i + 1 })}
+            onClick={() => onSelect(c.id)}
+            className={`absolute rounded-xl transition-[transform,opacity,box-shadow] duration-300 ${
+              isHidden
+                ? 'pointer-events-none opacity-0 scale-50'
+                : picked
+                  ? 'z-30 ring-2 ring-violet-400 shadow-lg shadow-violet-500/30'
+                  : interactive
+                    ? 'hover:z-40 hover:shadow-md hover:shadow-violet-400/20'
+                    : ''
+            }`}
+            style={{
+              left: x,
+              top: y,
+              width: C_CARD_W,
+              height: C_CARD_H,
+              transform: `rotate(${rotation}deg) scale(${picked ? 1.12 : 1})`,
+              zIndex: picked ? 60 : baseZ,
+            }}
+          >
+            <FlipCard card={c} revealed={false} size="xs" showBadge={false} />
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ── Export ─────────────────────────────────────────────────────── */
+export function CardFan({ layout = 'linear', ...props }: CardFanProps) {
+  if (layout === 'circular') return <CircularFan {...props} />
+  return <LinearFan {...props} />
 }

@@ -6,7 +6,7 @@ export interface DrawnCard {
 }
 
 export const DECK_SIZE = 78
-export const TABLE_SIZE = 22
+export const TABLE_SIZE = 78
 
 /** Fisher-Yates, trả về mảng mới, không mutate đầu vào */
 export function shuffle<T>(input: readonly T[]): T[] {

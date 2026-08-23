@@ -2445,3 +2445,127 @@ nhấn "Xáo bài" → animation xáo → mới trải bài ra chọn.
 - Gợi ý bổ sung (ngoài TARGET hiện tại): thêm riffle sound effect khi
   xáo, hoặc hover effect trên stack — PM/user quyết sau.
 - Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — /tarot-reading: 78 lá xòe hình tròn, không scroll (phiên này)
+
+### Root cause / yêu cầu
+Trước khi patch: `TABLE_SIZE = 22`, CardFan là hàng ngang scroll chỉ hiện 22
+lá, phải kéo qua kéo lại để chọn. User muốn: trang tarot-reading hiện trọn
+vẹn78 lá, xòe theo hình tròn (circular fan), không cần scroll.
+
+### Đã thay đổi (5 files, patch nhỏ nhất)
+1. **src/lib/tarot.ts**: `TABLE_SIZE` đổi từ `22` → `78` — rút đủ bộ bài.
+2. **src/components/FlipCard.tsx**: thêm size `xs: 'w-11 h-[72px] text-[7px]'`
+   vào SIZE map — kích thước nhỏ vừa vòng tròn 78 lá.
+3. **src/components/CardFan.tsx**: thêm prop `layout?: 'linear' | 'circular'`
+   (mặc định `'linear'` giữ nguyên hành vi 7 chỗ khác). Khi `layout='circular'`:
+   - Container fixed 760×760px, radius 320px, mỗi lá đặt absolute theo polar
+     coordinates `(cx + r·cosθ, cy + r·sinθ)`, `rotate(θ+90°)` để top hướng
+     ra ngoài tâm.
+   - Chọn lá → ring violet + scale 1.12 + translate ra ngoài 18px.
+   - z-index theo vị trí vòng tròn (đáy → trên cùng), selected/hover lên cao nhất.
+   - Bỏ drag-scroll, bỏ overflow-x-auto.
+   - Fallback: `layout='linear'` giữ nguyên code cũ (LinearFan), không phá
+     QuestionPage hay các chỗ dùng CardFan khác.
+4. **src/pages/TopicPage.tsx**: truyền `layout="circular"` cho CardFan; bỏ
+   `overflow-hidden` + glow div (glow giờ nằm trong CircularFan).
+5. **src/lib/tarot.test.ts**: cập nhật test `drawDeck()` mặc định từ 22 → 78.
+
+### File đã sửa
+- src/lib/tarot.ts
+- src/components/FlipCard.tsx
+- src/components/CardFan.tsx
+- src/pages/TopicPage.tsx
+- src/lib/tarot.test.ts
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx.cmd tsc -b`: exit 0, 0 lỗi.
+- `npm.cmd run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npx.cmd vitest run`: 7 files / **28 tests PASS** (cập nhật test drawDeck
+  mặc định 78 lá).
+- `npm.cmd run build`: OK 411ms; JS 294.93KB / gzip 92.18KB; CSS 48.10KB.
+- dist/AssetsTarot78 đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual circular fan (78 lá xòe tròn, hiệu ứng chọn, responsive trên
+  màn hình nhỏ) cần browser thật — user tự `npm run dev` soi.
+- QuestionPage (`/question-reading`) vẫn dùng `layout='linear'` mặc định
+  (22 lá scroll) — đúng phạm vi user yêu cầu chỉ sửa tarot-reading.
+- Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — /tarot-reading: ẩn card fan khi reveal, hiện 3 lá to (phiên này)
+
+### Root cause
+TopicPage.tsx:85 render pill topic + card fan cho `table+shuffled`, `countdown`,
+VÀ `reveal` → ở phase reveal, pill + card fan (78 lá) vẫn hiển thị cùng 3 lá
+revealed → chồng lên nhau, không đúng yêu cầu "ẩn màn hình rút bài".
+
+### Đã thay đổi (1 dòng)
+- **src/pages/TopicPage.tsx:85**: đổi điều kiện render từ
+  `((flow.phase === 'table' && shuffled) || flow.phase === 'countdown' || flow.phase === 'reveal')`
+  thành `((flow.phase === 'table' && shuffled) || flow.phase === 'countdown')`.
+  → Ở `reveal`: pill + card fan ẩn hoàn toàn, chỉ còn 3 FlipCard to (size lg)
+  lật tự động + nút "Xem kết quả".
+
+### Flow mới
+1. `setup` → chọn chủ đề
+2. `table` (chưa xáo) → stack 5 lá + nút "Xáo bài"
+3. `table` (đã xáo) → 78 lá xòe tròn + pill topic + nút "Xác nhận 3 lá"
+4. `countdown` → đếm ngược
+5. **`reveal`** → pill + card fan ẩn → 3 FlipCard lg xuất hiện to, lật tự
+   động từng lá (600ms → 400ms) → nút "Xem kết quả"
+
+### File đã sửa
+- src/pages/TopicPage.tsx
+
+### Kết quả kiểm tra
+- `npx.cmd tsc -b`: exit 0, 0 lỗi.
+- `npm.cmd run lint`: 0 lỗi (4 warning cũ StarField, ngoài TARGET).
+- `npx.cmd vitest run`: 7 files / **28 tests PASS**.
+- `npm.cmd run build`: OK 382ms; JS 294.91KB / gzip 92.18KB; CSS 48.10KB.
+- dist/AssetsTarot78 đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual 3 lá revealed to lên (size lg = 192×320px) cần browser thật —
+  user tự `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — /tarot-reading: ẩn card fan trước khi countdown (phiên này)
+
+### Root cause
+TopicPage.tsx:85 render card fan (78 lá xòe tròn + pill topic) cho cả
+`table+shuffled` VÀ `countdown` → khi user nhấn "Xác nhận 3 lá", phase
+chuyển sang `countdown` nhưng card fan vẫn hiện, countdown dialog đè
+lên trên → không đúng yêu cầu "ẩn màn hình rút bài đi, rồi mới đếm
+ngược".
+
+### Đã thay đổi (1 dòng)
+- **src/pages/TopicPage.tsx:85**: đổi từ
+  `{((flow.phase === 'table' && shuffled) || flow.phase === 'countdown') && (`
+  thành `{(flow.phase === 'table' && shuffled) && (`.
+  → Card fan + pill topic chỉ render ở `table+shuffled`. Khi chuyển sang
+  `countdown`: card fan ẩn ngay, chỉ còn CountdownDialog.
+
+### Flow mới
+1. `setup` → chọn chủ đề
+2. `table` (chưa xáo) → stack 5 lá + nút "Xáo bài"
+3. `table` (đã xáo) → 78 lá xòe tròn + pill topic + nút "Xác nhận 3 lá"
+4. **Nhấn xác nhận → card fan ẩn** → `countdown` → đếm ngược
+5. `reveal` → 3 FlipCard lg lật tự động → nút "Xem kết quả"
+
+### File đã sửa
+- src/pages/TopicPage.tsx
+
+### Kết quả kiểm tra
+- `npx.cmd tsc -b`: exit 0, 0 lỗi.
+- `npm.cmd run lint`: 0 lỗi (4 warning cũ StarField, ngoài TARGET).
+- `npx.cmd vitest run`: 7 files / **28 tests PASS**.
+- `npm.cmd run build`: OK 440ms; JS 294.88KB / gzip 92.18KB; CSS 48.10KB.
+- dist/AssetsTarot78 đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual (card fan ẩn trước khi countdown, countdown trên nền trống)
+  cần browser thật — user tự `npm run dev` soi.
+- Nợ cũ mục 1-8 giữ nguyên.

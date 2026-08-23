@@ -82,7 +82,7 @@ export function TopicPage() {
         </div>
       )}
 
-      {((flow.phase === 'table' && shuffled) || flow.phase === 'countdown' || flow.phase === 'reveal') && (
+      {(flow.phase === 'table' && shuffled) && (
         <div className="mt-6">
           <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
             <span className="rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1">
@@ -92,17 +92,14 @@ export function TopicPage() {
               {t('topic.step2')} <span className="font-semibold text-gold-soft">{flow.selectedIds.length}/3</span>
             </span>
           </div>
-          <div className="relative mt-4 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-4">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-56 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-600/15 blur-3xl"
-            />
+          <div className="relative mt-4 rounded-3xl border border-white/10 bg-white/5 p-4">
             <CardFan
               deck={flow.deck}
               selectedIds={flow.selectedIds}
               hiddenIds={hiddenIds}
               interactive={flow.phase === 'table'}
               onSelect={flow.toggle}
+              layout="circular"
             />
           </div>
         </div>

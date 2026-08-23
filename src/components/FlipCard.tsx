@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/useI18n'
 import { cardName } from '../i18n/localize'
 
 const SIZE = {
+  xs: 'w-11 h-[72px] text-[7px]',
   sm: 'w-24 h-40 text-[10px]',
   md: 'w-32 h-52 text-xs',
   lg: 'w-48 h-80 text-sm',

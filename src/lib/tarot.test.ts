@@ -17,11 +17,11 @@ describe('shuffle', () => {
 })
 
 describe('drawDeck', () => {
-  it('mặc định rút đúng 22 lá, id duy nhất trong khoảng 1..78', () => {
+  it('mặc định rút đúng 78 lá, id duy nhất trong khoảng 1..78', () => {
     const deck = drawDeck()
-    expect(deck).toHaveLength(22)
+    expect(deck).toHaveLength(78)
     const ids = new Set(deck.map((c) => c.id))
-    expect(ids.size).toBe(22)
+    expect(ids.size).toBe(78)
     for (const c of deck) {
       expect(c.id).toBeGreaterThanOrEqual(1)
       expect(c.id).toBeLessThanOrEqual(78)
