@@ -6,6 +6,7 @@ import { cardName } from '../i18n/localize'
 
 const SIZE = {
   xs: 'w-11 h-[72px] text-[7px]',
+  fan: 'w-[72px] h-[116px] text-[8px]',
   sm: 'w-24 h-40 text-[10px]',
   md: 'w-32 h-52 text-xs',
   lg: 'w-48 h-80 text-sm',

@@ -13,10 +13,10 @@ interface CardFanProps {
 }
 
 /* ── Circular constants ─────────────────────────────────────────── */
-const C_RADIUS = 320
-const C_CARD_W = 44
-const C_CARD_H = 72
-const C_CONTAINER = 760
+const C_RADIUS = 400
+const C_CARD_W = 72
+const C_CARD_H = 116
+const C_CONTAINER = 1000
 
 /* ── Linear (original) ──────────────────────────────────────────── */
 function LinearFan({ deck, selectedIds, hiddenIds, interactive, onSelect }: Omit<CardFanProps, 'layout'>) {
@@ -147,7 +147,7 @@ function CircularFan({ deck, selectedIds, hiddenIds, interactive, onSelect }: Om
               zIndex: picked ? 60 : baseZ,
             }}
           >
-            <FlipCard card={c} revealed={false} size="xs" showBadge={false} />
+            <FlipCard card={c} revealed={false} size="fan" showBadge={false} />
           </button>
         )
       })}

@@ -2569,3 +2569,161 @@ ngược".
 - Visual (card fan ẩn trước khi countdown, countdown trên nền trống)
   cần browser thật — user tự `npm run dev` soi.
 - Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — /tarot-reading: đổi animation xáo bài sang riffle shuffle (phiên này)
+
+### Root cause / yêu cầu
+Animation xáo bài hiện tại (5 lá oscillate trái/phải 0.12s infinite) quá
+đơn giản, không giống thật. User muốn hiệu ứng riffle shuffle — hai nửa bộ
+bài tách ra rồi đan lại vào nhau.
+
+### Đã thay đổi (2 files, patch nhỏ nhất)
+1. **src/pages/TopicPage.tsx**: tăng từ 5 lên 10 card backs (hai nửa x 5
+   lá). Container đổi `h-40` → `h-48` (đủ chỗ cho animation tách ngang).
+   Stacking offset giảm nhẹ cho sát bộ bài thật hơn.
+2. **src/index.css**: thay 2 keyframe oscillate (`shuffle-left`/`shuffle-right`
+   0.12s infinite) bằng hiệu ứng riffle:
+   - 10 lá chia 2 nửa: nth-child 1-5 = `riffle-left`, nth-child 6-10 =
+     `riffle-right`, stagger delay 0-0.4s.
+   - Mỗi keyframe 5 phase: split (tách trái/phải ±50px) → interleave
+     (đan lại ±20px) → hold → merge (gộp ±3px) → reset.
+   - Duration 2s, `ease-in-out`, `1` lần (không loop).
+   - `prefers-reduced-motion` giữ nguyên đã tắt `.shuffle-card`.
+
+### Flow giữ nguyên
+1. setup → chọn chủ đề
+2. table (chưa xáo) → stack 10 lá + nút "Xáo bài"
+3. Nhấn nút → animation riffle 2s → stack biến mất → CardFan trải bài
+4. User chọn 3 lá → countdown → reveal
+
+### File đã sửa
+- src/pages/TopicPage.tsx
+- src/index.css
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 399ms; JS 294.88KB / gzip 92.18KB; CSS ~49KB.
+- Dist CSS verify (node đọc build): `riffle-left`, `riffle-right`,
+  `shuffle-active`, `shuffle-card`, `prefers-reduced-motion` đều present.
+- dist/AssetsTarot78 đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual animation riffle shuffle cần browser thật — user tự `npm run dev`
+  soi. Hiệu ứng 2s với stagger delay có thể cần tinh chỉnh timing sau
+  khi thấy thực tế.
+- Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — /tarot-reading: bài to hơn trong circular fan (phiên này)
+
+### Root cause / yêu cầu
+Circular fan hiện dùng size `xs` (44×72px) cho 78 lá — quá nhỏ, khó nhìn.
+User muốn bài to nhất có thể trong vòng tròn 78 lá.
+
+### Tính toán tối đa
+- 78 lá, góc giữa = 360/78 = 4.615°, khoảng cách tâm-arclength = R × 0.0805
+- overlap ~50% width chấp nhận được → max width ≈ R × 0.161
+- Container = 2R + width ≈ 2.161R
+- Viewport 1024px (usable ~992px): R_max ≈ 459px, card max ≈ 74px
+- Viewport 1280px (usable ~1248px): R_max ≈ 577px, card max ≈ 93px
+
+### Đã thay đổi (3 files, patch nhỏ nhất)
+1. **src/components/FlipCard.tsx**: thêm size `fan: 'w-[72px] h-[116px] text-[8px]'`
+   — lớn hơn ~64% so xs (44×72px), vừa viewport 1024px.
+2. **src/components/CardFan.tsx**: CircularFan constants tăng:
+   - `C_RADIUS`: 320 → 400
+   - `C_CARD_W`: 44 → 72, `C_CARD_H`: 72 → 116
+   - `C_CONTAINER`: 760 → 1000
+   - FlipCard size `xs` → `fan`
+3. **src/pages/TopicPage.tsx**: shuffle timeout 1500ms → 2200ms — khớp CSS
+   animation riffle 2s (trước đó bị cắt giữa chừng khi state đổi).
+
+### File đã sửa
+- src/components/FlipCard.tsx
+- src/components/CardFan.tsx
+- src/pages/TopicPage.tsx
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 276ms; JS 294.94KB / gzip 92.21KB; CSS 49.57KB.
+- dist/AssetsTarot78 đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual circular fan với bài to hơn (72×116px, container 1000px) cần browser
+  thật — user tự `npm run dev` soi. Trên viewport <1024px có thể cần scroll
+  ngang (container 1000px > usable width).
+- Shuffle animation riffle giờ chạy đầy đủ 2s trước khi hiện card fan.
+- Nợ cũ mục 1-8 giữ nguyên.
+
+## Phase CODE — /tarot-reading: shuffle 3 giai đoạn (trải → xếp → sốc → vòng tròn) (phiên này)
+
+### Root cause / yêu cầu
+Animation xáo bài đơn giản (riffle 2s) chưa đủ ấn tượng. User muốn chuỗi
+animation 3 giai đoạn:
+1. **Spread**: trải bài ra hai bên
+2. **Gather + Riffle**: xếp lại rồi sốc bài
+3. **Circular fan**: transition sang vòng tròn 78 lá
+
+### Đã thay đổi (2 files)
+1. **src/pages/TopicPage.tsx** — state machine mới:
+   - Thay `isShuffling: boolean` bằng `shufflePhase: 'idle' | 'spread' | 'gather' | 'riffle' | 'done'`
+   - Thêm `useRef` để quản lý nhiều timeout, cleanup khi chọn chủ đề mới
+   - `doShuffle()`: spread (0ms) → gather (800ms) → riffle (1500ms) →
+     done + shuffled (3000ms) → hiện circular fan
+   - Button disabled khi phase !== 'idle'
+   - CSS class names mới trên shuffle-stack: `shuffle-spread` / `shuffle-gather` / `shuffle-riffle`
+2. **src/index.css** — 3 phase CSS animations:
+   - **Phase 1 — Spread** (`card-spread`): 10 lá spread ngang ±90px, stagger
+     0.03s/lá, duration 0.8s ease-out, `forwards` giữ vị trí spread.
+     CSS custom properties `--sx/--sy/--sr` trên mỗi nth-child.
+   - **Phase 2 — Gather** (`card-gather-left/right`): reverse spread ±0px,
+     stagger 0.02-0.11s, duration 0.7s ease-in, `forwards` về vị trí 0.
+     Duplicate custom properties trên `.shuffle-gather` để animation
+     reference được spread positions.
+   - **Phase 3 — Riffle** (`riffle-left/right`): split ±55px, interleave
+     ±25px, merge ±3px, stagger 0.05-0.32s, duration 1.5s ease-in-out.
+   - `prefers-reduced-motion` giữ nguyên đã tắt `.shuffle-card`.
+
+### Timeline animation
+```
+0ms        800ms       1500ms              3000ms
+│──SPREAD──│──GATHER───│────RIFFLE──────────│→ circular fan
+  0.8s       0.7s         1.5s
+```
+
+### Flow mới
+1. setup → chọn chủ đề
+2. table (idle) → hiện stack 10 lá + nút "Xáo bài"
+3. Nhấn nút → **spread** (bài trải ngang) → **gather** (xếp lại) → **riffle** (sốc bài)
+4. Xong → stack biến mất → circular fan 78 lá hiện ra
+5. User chọn 3 lá → countdown → reveal
+
+### File đã sửa
+- src/pages/TopicPage.tsx
+- src/index.css
+- STATUS.md
+
+### Kết quả kiểm tra
+- `npx vitest run`: 7 files / **28 tests PASS**.
+- `npx tsc -b`: exit 0, 0 lỗi.
+- `npm run lint` (oxlint): 0 lỗi; đúng 4 warning cũ StarField Math.random
+  (ngoài TARGET).
+- `npm run build`: OK 274ms; JS 295.31KB / gzip 92.31KB; CSS 53.37KB
+  (tăng từ ~49KB do3 phase keyframes mới + custom properties).
+- Dist CSS verify: `card-spread`, `card-gather-left`, `card-gather-right`,
+  `riffle-left`, `riffle-right`, `shuffle-spread`, `shuffle-gather`,
+  `shuffle-riffle`, `prefers-reduced-motion` đều present.
+- dist/AssetsTarot78 đủ **78 PNG**.
+
+### Vấn đề còn lại
+- Visual 3 giai đoạn animation cần browser thật — user tự `npm run dev` soi.
+  Timing/stagger có thể cần tinh chỉnh khi thấy thực tế.
+- Duration tổng 3s trước khi hiện circular fan — nếu quá dài có thể rút ngắn.
+- Nợ cũ mục 1-8 giữ nguyên.

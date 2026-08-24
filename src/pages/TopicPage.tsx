@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ActionButton } from '../components/ActionButton'
 import { CardFan } from '../components/CardFan'
@@ -19,7 +19,8 @@ export function TopicPage() {
   const [topic, setTopic] = useState<Topic | null>(null)
   const [revealedCount, setRevealedCount] = useState(0)
   const [shuffled, setShuffled] = useState(false)
-  const [isShuffling, setIsShuffling] = useState(false)
+  const [shufflePhase, setShufflePhase] = useState<'idle' | 'spread' | 'gather' | 'riffle' | 'done'>('idle')
+  const timers = useRef<number[]>([])
   const selected = chosenCards(flow.deck, flow.selectedIds)
   const hiddenIds = new Set(
     flow.phase === 'reveal' ? flow.deck.filter((c) => !flow.selectedIds.includes(c.id)).map((c) => c.id) : [],
@@ -33,9 +34,17 @@ export function TopicPage() {
   }, [flow.phase, revealedCount])
 
   const doShuffle = () => {
-    if (isShuffling || shuffled) return
-    setIsShuffling(true)
-    setTimeout(() => { setIsShuffling(false); setShuffled(true) }, 1500)
+    if (shufflePhase !== 'idle' || shuffled) return
+    timers.current.forEach(clearTimeout)
+    timers.current = []
+    setShufflePhase('spread')
+    timers.current.push(window.setTimeout(() => setShufflePhase('gather'), 800))
+    timers.current.push(window.setTimeout(() => setShufflePhase('riffle'), 1500))
+    timers.current.push(window.setTimeout(() => {
+      setShufflePhase('done')
+      setShuffled(true)
+      setShufflePhase('idle')
+    }, 3000))
   }
 
   const viewResult = () => {
@@ -57,25 +66,29 @@ export function TopicPage() {
             <div className="mx-auto mt-3 h-px w-24 bg-gradient-to-r from-transparent to-violet-400/40" />
           </div>
           <div className="mt-10">
-            <TopicGrid onPick={(t) => { setTopic(t); setShuffled(false); setIsShuffling(false); flow.start() }} />
+            <TopicGrid onPick={(t) => { setTopic(t); setShuffled(false); setShufflePhase('idle'); timers.current.forEach(clearTimeout); timers.current = []; flow.start() }} />
           </div>
         </>
       )}
 
       {flow.phase === 'table' && !shuffled && (
         <div className="mt-10 flex flex-col items-center gap-6">
-          <div className={`shuffle-stack relative h-40 w-24 ${isShuffling ? 'shuffle-active' : ''}`}>
-            {[0, 1, 2, 3, 4].map((i) => (
+          <div className={`shuffle-stack relative h-48 w-24 ${
+            shufflePhase === 'spread' ? 'shuffle-spread' :
+            shufflePhase === 'gather' ? 'shuffle-gather' :
+            shufflePhase === 'riffle' ? 'shuffle-riffle' : ''
+          }`}>
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
               <div
                 key={i}
                 className="shuffle-card card-back border border-indigo-400/30"
-                style={isShuffling ? undefined : {
-                  transform: `translateX(${(i - 2) * 3}px) rotate(${(i - 2) * 2}deg) translateY(${Math.abs(i - 2) * 2}px)`,
-                }}
+                style={shufflePhase === 'idle' ? {
+                  transform: `translateX(${(i - 4.5) * 2}px) rotate(${(i - 4.5) * 1.5}deg) translateY(${Math.abs(i - 4.5) * 1.5}px)`,
+                } : undefined}
               />
             ))}
           </div>
-          <ActionButton onClick={doShuffle} disabled={isShuffling}>
+          <ActionButton onClick={doShuffle} disabled={shufflePhase !== 'idle'}>
             {t('topic.shuffleBtn')}
           </ActionButton>
           <p className="text-xs text-slate-500">{t('topic.shuffleHint')}</p>
